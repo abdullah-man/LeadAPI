@@ -1,7 +1,7 @@
-from fastapi import FastAPI 
+from fastapi import FastAPI, Body, Depends 
 from fastapi import UploadFile, File
-from pydantic import BaseSettings
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field, EmailStr
 import uvicorn
 
 from db_operations import DbOperation
@@ -16,6 +16,9 @@ import os
 from secrets import token_hex # for hashing uploaded file name
 import psycopg2
 
+from app.auth.jwt_handler import signJWT
+from app.auth.jwt_bearer import jwtBearer  
+
 
 class Settings(BaseSettings):
     """
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
     db_data_table_name : str = 'information'
 
 
+# ---------------------- Models ---------------------------
 
 class Lead(BaseModel):
     """
@@ -42,11 +46,43 @@ class ModelDetails(BaseModel):
     db_model_name : str
 
 
+class UserSchema(BaseModel):
+    fullname : str = Field(default=None)
+    email : EmailStr = Field(default=None) # EmailStr is an email validator
+    password : str = Field(default=None)
+    class Config:
+        the_schema = {
+            "user_demo" :{
+                "name" : "abc",
+                "email" : "abc@abc.com",
+                "password" : "123"
+            }
+        }
+
+
+class UserLoginSchema(BaseModel):
+    email : EmailStr = Field(default=None) # EmailStr is an email validator
+    password : str = Field(default=None)
+    class Config:
+        the_schema = {
+            "user_demo" :{
+                "email" : "abc@abc.com",
+                "password" : "123"
+            }
+        }
+
+# ---------------------------------------------------------------
+
+users = []  # temporarily for authentication . Later in DB
+
+
 settings = Settings()
 app = FastAPI()
 
 
-@app.get("/data_fetch")
+# ------------------------- Routes -------------------------------
+
+@app.get("/data_fetch", dependencies=[Depends(jwtBearer())])
 async def data_fetch():
     """
     Fetches all data from the database and returns as JSON in response
@@ -64,7 +100,7 @@ async def data_fetch():
     return data
 
 
-@app.post("/label_fetch")
+@app.post("/label_fetch", dependencies=[Depends(jwtBearer())])
 async def label_fetch(rss_feed : Lead):
     """
     Receives a lead in json format, extracts embedded information,
@@ -112,7 +148,7 @@ async def label_fetch(rss_feed : Lead):
     return extracted_info
 
 
-@app.post("/model_upload")
+@app.post("/model_upload", dependencies=[Depends(jwtBearer())])
 async def model_upload(file : UploadFile = File(...)):
     file_extension = file.filename.split(".").pop()
     model_name = file.filename.split(".")[0]
@@ -139,7 +175,7 @@ async def model_update():
     pass
 
 
-@app.delete("/model_delete")
+@app.delete("/model_delete", dependencies=[Depends(jwtBearer())])
 async def model_delete(model_details : ModelDetails):
     # getting json file sent through the post request data parameter
     model_details = model_details.model_dump_json()
@@ -176,6 +212,34 @@ async def model_delete(model_details : ModelDetails):
 
     return {'status' : 'Success', 'message' : 'Model deleted from database and server successfully'}
  
+
+# --------------- Signup - Login Routes -------------------
+
+# user sign up - to create a new user
+@app.post("/user/signup", tags=["user"])
+def user_signup(user : UserSchema = Body(default=None)):
+    users.append(user) # add the user to the database
+    return signJWT(user.email) # that's why we need to install email validator from pydantic
+
+# checks if a user already exists before creating a jwt with the user email
+def check_user(data : UserLoginSchema): # UserLoginSchema has email and password
+    for user in users:
+        if user.email == data.email and user.password == data.password:
+            return True
+        return False
+
+# login
+@app.post("/user/login", tags=["user"])
+def user_login(user : UserLoginSchema = Body(default=None)):
+    # we also want to return signJWT with the user email as the user has already sugned up and
+    # registered with his email
+    if check_user(user):
+        return signJWT(user.email)
+    else:
+        return {"error" : "invalid login details"}
+
+
+
 
 if __name__== '__main__':
     uvicorn.run("application:app", host="127.0.0.1", port=8000, reload=True)
