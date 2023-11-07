@@ -1,6 +1,6 @@
 from fastapi import FastAPI 
 from fastapi import UploadFile, File
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
 from pydantic import BaseModel
 import uvicorn
 
