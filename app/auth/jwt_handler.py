@@ -1,5 +1,6 @@
 # responsible for signing, encoding, decoding, returning of the tokens
 import time # to set expiray of the token
+import datetime
 import jwt # for encoding and decoding of the generated token strings
 from decouple import config # helps in organizing our settings, so that we can
                             # change parameters without having to redeploy the application
@@ -23,7 +24,7 @@ def signJWT(userID : str): # userID is username/email of the user
     # a dict containing userID and expiration time
     payload = {
         "userID" : userID,
-        "expiry" : time.time() + 600
+        "expiry" : (datetime.datetime.utcnow() + datetime.timedelta(365)).timestamp() # 365 days validity
     }
     # now creating the token
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)  
@@ -36,6 +37,6 @@ def decodeJWT(token : str):
     """
     try:
         decode_token = jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)
-        return decode_token if decode_token['expires'] >= time.time() else None 
+        return decode_token if decode_token['expires'] >= (datetime.datetime.utcnow()).timestamp() else None 
     except:
         return {} 

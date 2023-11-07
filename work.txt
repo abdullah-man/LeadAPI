@@ -1,9 +1,9 @@
 Remaining Work after authentication:
 ------------------------------------
 
-1-  Database User Table and authentication using this 
-2-  Expiry of JWT token handling, refreshing | a token that never expires
-3-  Models : Lead and ModelDetails improvement and moving to models file
+1-  Database User Table and authentication using this                                               DONE
+2-  Expiry of JWT token handling | a token that expires after one year                              DONE    
+3-  Models : Lead and ModelDetails improvement and moving to models file                            
 4-  Routes : Improvement on handling and validating the incoming request Body properly
 5-  Routes : Moving to routes file
 6-  Clearing out application.py file and renaming it to main
@@ -12,4 +12,4 @@ Remaining Work after authentication:
 10- Password hashing addition in the code
 11- Database : [Optional] handling via SQLModel class
 12- Improve code by replacing save_model and fetch_model with insert_data_db and fetch_data methods
- 
+
