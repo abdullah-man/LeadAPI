@@ -28,6 +28,7 @@ class Settings(BaseSettings):
                                   'password' : 'axiom123', 'host' : '0.0.0.0', 
                                   'port' : '5432'}
     db_data_table_name : str = 'information'
+    db_users_table_name : str = 'users'
 
 
 # ---------------------- Models ---------------------------
@@ -38,6 +39,14 @@ class Lead(BaseModel):
     """
     lead : str
     db_model_name : str
+    class Config:
+        the_schema = {
+            "lead_demo" :{
+                "lead" : "<p>this is a lead</p>",
+                "db_model_name" : "jkl_v0",
+            }
+        }
+
 
 class ModelDetails(BaseModel):
     """
@@ -209,31 +218,56 @@ async def model_delete(model_details : ModelDetails):
     except (Exception, FileNotFoundError) as e:
         return {'status' : 'Failed', 'message' : 'Model file could not be deleted from server', 'exception' : e}
 
-
     return {'status' : 'Success', 'message' : 'Model deleted from database and server successfully'}
- 
+
 
 # --------------- Signup - Login Routes -------------------
+# checks if a user already exists in the database before signup or login
+def check_user(data : UserLoginSchema, caller_flag : str): # UserLoginSchema has email and password
+    """ 
+    fetches all users from db and check presence of the passed user as data argument.
+    """
+    conn_info = settings.db_connection_info
+    table_name = settings.db_users_table_name
+    try:
+        db_op = DbOperation()
+        sql = f"SELECT * FROM {table_name}"
+        fetched_users = db_op.fetch_data(conn_info=conn_info, sql=sql)
+        for user in fetched_users:
+            if caller_flag=='signup':
+                if user[2] == data.email: # unique email for each user - email is at tuple index 2
+                    return True
+                return False
+            elif caller_flag=='login':
+                if user[2] == data.email and user[3] == data.password: # unique email for each user - email is at tuple index 2
+                    return True
+                return False
+            else:
+                return {"error" : "caller flag not set either signup or login"}
+    except(Exception) as e:
+        return {"error" : "Exception occured while performing DB operation", "details" : f"{e}"}
+
 
 # user sign up - to create a new user
 @app.post("/user/signup", tags=["user"])
-def user_signup(user : UserSchema = Body(default=None)):
-    users.append(user) # add the user to the database
-    return signJWT(user.email) # that's why we need to install email validator from pydantic
+def user_signup(user : UserSchema = Body(default=None)):   
+    if check_user(user, caller_flag='signup'):
+        db_op = DbOperation()
+        sql = "INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)"
+        values = (user.fullname, user.email, user.password) # user is an object of UserSchema class
+        db_op.insert_data_db(conn_info=settings.db_connection_info, sql=sql, values=values)
+        # return the JWT
+        return {"success" : "user has successfully signed up"}
+    else:
+        return {"notification" : "user already exists"}
 
-# checks if a user already exists before creating a jwt with the user email
-def check_user(data : UserLoginSchema): # UserLoginSchema has email and password
-    for user in users:
-        if user.email == data.email and user.password == data.password:
-            return True
-        return False
 
 # login
 @app.post("/user/login", tags=["user"])
 def user_login(user : UserLoginSchema = Body(default=None)):
     # we also want to return signJWT with the user email as the user has already sugned up and
     # registered with his email
-    if check_user(user):
+    if check_user(user, caller_flag='login'):
         return signJWT(user.email)
     else:
         return {"error" : "invalid login details"}
