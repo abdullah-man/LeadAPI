@@ -32,11 +32,11 @@ def signJWT(userID : str): # userID is username/email of the user
 
 
 def decodeJWT(token : str):
-    """Takes a token and decodes it using jwt package, and if expiratio date is valid,
+    """Takes a token and decodes it using jwt package, and if expiration date is valid,
     return the token 
     """
     try:
         decode_token = jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)
         return decode_token if decode_token['expires'] >= (datetime.datetime.utcnow()).timestamp() else None 
     except:
-        return {} 
+        return {"error" : ""} 
