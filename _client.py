@@ -65,31 +65,32 @@ log_in_response = requests.post('http://127.0.0.1:8000/user/login',
                                 json={"email": "axiom@axiomworld.net", "password": "axiom123"})
 
 login_response_dict = json.loads(log_in_response.text)
-print(login_response_dict)
+# print(login_response_dict)
 
-# # label_fetch - a Lead for inference
-# rss_feed = """"<p>I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we've just aquired.<br> 
-# # We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed.<br> 
-# # The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate. <br><br><b>Hourly Range</b>: $7.00-$20.00 
+# label_fetch - a Lead for inference
+rss_feed = """"<p>I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we've just aquired.<br> 
+# We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed.<br> 
+# The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate. <br><br><b>Hourly Range</b>: $7.00-$20.00 
  
-# # <br><b>Posted On</b>: August 06, 2023 09:40 UTC<br><b>Category</b>: Full Stack Development<br><b>Skills</b>:Odoo     
-# # <br><b>Country</b>: Australia 
-# # <br><a href=""https://www.upwork.com/jobs/Odoo-Expert_%7E01a4aae9e53e923117?source=rss"">click to apply</a> 
-# # <br> 
-# # <br> 
-# # from All jobs | <a href=""http://upwork.com"">upwork.com</a> <a href=""https://ift.tt/pWj7omN"">https://ift.tt/pWj7omN</a><br> 
-# # via <a href=""https://ifttt.com/?ref=da&amp;site=gmail"">IFTTT</a> 
-# # </p>"""
+# <br><b>Posted On</b>: August 06, 2023 09:40 UTC<br><b>Category</b>: Full Stack Development<br><b>Skills</b>:Odoo     
+# <br><b>Country</b>: Australia 
+# <br><a href=""https://www.upwork.com/jobs/Odoo-Expert_%7E01a4aae9e53e923117?source=rss"">click to apply</a> 
+# <br> 
+# <br> 
+# from All jobs | <a href=""http://upwork.com"">upwork.com</a> <a href=""https://ift.tt/pWj7omN"">https://ift.tt/pWj7omN</a><br> 
+# via <a href=""https://ifttt.com/?ref=da&amp;site=gmail"">IFTTT</a> 
+# </p>"""
 
-# rss_feed = {'lead' : rss_feed, 'db_model_name' : 'rf_clf_v0'}
-# bearer_token = login_response_dict['access token']
+rss_feed = {'lead' : rss_feed, 'db_model_name' : 'rf_clf_v0'}
+bearer_token = login_response_dict['access token']
+# bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJheGlvbUBheGlvbXdvcmxkLm5ldCIsImV4cGlyZXMiOjE2OTk0MTIyNzAuODg2NX0.wtQwhk3Yp03zBpH8psbCcxqARCkuvoPpFhEtBP5Wwg4"
 # print(bearer_token)
-# post_response = requests.post('http://127.0.0.1:8000/label_fetch',
-#                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
-#                               json=rss_feed)
+inference_response = requests.post('http://127.0.0.1:8000/label_fetch',
+                              headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
+                              json=rss_feed)
 
-# post_response_dict = json.loads(post_response.text)
-# print(post_response_dict)
+inference_response_dict = json.loads(inference_response.text)
+print(inference_response_dict)
 
 
 # ------------------------

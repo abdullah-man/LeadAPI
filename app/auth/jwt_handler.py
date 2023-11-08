@@ -24,7 +24,7 @@ def signJWT(userID : str): # userID is username/email of the user
     # a dict containing userID and expiration time
     payload = {
         "userID" : userID,
-        "expiry" : (datetime.datetime.utcnow() + datetime.timedelta(365)).timestamp() # 365 days validity
+        "expires" : (datetime.datetime.utcnow() + datetime.timedelta(0,5)).timestamp() # 365 days validity
     }
     # now creating the token
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)  
@@ -36,7 +36,13 @@ def decodeJWT(token : str):
     return the token 
     """
     try:
-        decode_token = jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)
-        return decode_token if decode_token['expires'] >= (datetime.datetime.utcnow()).timestamp() else None 
+        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        print("**** Decoded token : \n",decoded_token)
+        if decoded_token['expires'] >= (datetime.datetime.utcnow()).timestamp():
+            print(decoded_token['expires'])
+            print((datetime.datetime.utcnow()).timestamp())
+            return True 
+        else:
+            return False 
     except:
-        return {"error" : ""} 
+        return False

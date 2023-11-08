@@ -1,7 +1,7 @@
 # contains code to extract information from RSS Feed - One feed at a time
 import numpy as np
 from extraction_processing import StringProc
-from db_operations import DbOperation
+from app.database.db_operations import DbOperation
 
 
 def extractor(feed : str) -> dict:

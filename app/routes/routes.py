@@ -9,10 +9,10 @@ from fastapi import Body, Depends, APIRouter
 from fastapi import UploadFile, File
 from pydantic_settings import BaseSettings
 
-from db_operations import DbOperation
 from extraction import extractor
 from predict import Predict
-from db_warehouse import warehouse_dump
+from app.database.db_operations import DbOperation
+from app.database.db_warehouse import warehouse_dump
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
 from app.models.models import Lead, ModelDetails, UserLoginSchema, UserSchema

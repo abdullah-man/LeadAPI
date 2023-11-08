@@ -1,4 +1,4 @@
-from db_operations import DbOperation
+from app.database.db_operations import DbOperation
 
 def warehouse_dump(info_dict : dict, label : str, table_name : str) -> None:
     """
