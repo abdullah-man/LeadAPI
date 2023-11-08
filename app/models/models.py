@@ -1,16 +1,32 @@
 from pydantic import BaseModel, Field, EmailStr
+from typing import Union
 
 
 class Lead(BaseModel):
     """
     Model of the lead object passed as JSON object in POST request to label_fetch 
     """
-    lead : str
+    posted_on : str
+    category : str
+    skills : str
+    country : str
+    message : str
+    hourly_from : Union[float, str] # either float or string
+    hourly_to : Union[float, str]
+    budget : Union[float, str]
     db_model_name : str
     class Config:
         the_schema = {
             "lead_demo" :{
-                "lead" : "<p>this is a lead</p>",
+                "posted_on" : "<p>this is a lead</p>",
+                "category" : "<p>this is a lead</p>",
+                "skills" : "<p>this is a lead</p>",
+                "country" : "<p>this is a lead</p>",
+                "message" : "<p>this is a lead</p>",
+                "hourly_from" : "float or empty string",
+                "hourly_to" : "float or empty string",
+                "budget" : "float or empty string",
+                "label" : "empty string",
                 "db_model_name" : "jkl_v0",
             }
         }

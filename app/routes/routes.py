@@ -62,25 +62,19 @@ async def label_fetch(rss_feed : Lead):
     returns as dict with label info to the client
     """
     # getting json file sent through the post request data parameter
+    # model_dump() -> converts a pydantic model to dictionary object
     rss_feed = rss_feed.model_dump_json()
-
-    # type casting str into dict
     rss_feed = eval(rss_feed)
-    feed = rss_feed['lead'] # extracting rss feed text 
-    model_name = rss_feed['db_model_name'] # extracting model name 
-    # extract embedded info
-    extracted_info = extractor(feed=feed)
+    model_name = rss_feed['db_model_name']
 
-    # ---
     # load ml model from database
     conn_info = settings.db_connection_info
-
     sql = f"SELECT model_file FROM model WHERE model_name = %s" 
     value = (model_name,)
 
     db_op = DbOperation()
     model_file = db_op.fetch_model(conn_info=conn_info, sql=sql, value=value)
-    # ---
+    # unhash the model file name  
 
     # Deserializing the model file
     ml_model = pickle.load(open(model_file, 'rb'))
@@ -89,17 +83,17 @@ async def label_fetch(rss_feed : Lead):
     pr = Predict()
     # deepcopying, as mutable objects are passed by reference. 
     # extracted_info gets changed on passing as arg.
-    encoded_info = pr.encode_lead(data=copy.deepcopy(extracted_info)) 
+    encoded_info = pr.encode_lead(data=copy.deepcopy(rss_feed)) 
     vec = pr.vectorize_lead(encoded_info)
     predicted_label = pr.predict_lead(vector=vec, ml_model=ml_model)
 
     # save data into data-warehouse/database
-    warehouse_dump(info_dict=extracted_info, label=predicted_label, table_name=settings.db_data_table_name)
+    warehouse_dump(info_dict=rss_feed, label=predicted_label, table_name=settings.db_data_table_name)
 
     # send back to the client : HQ with label information
-    extracted_info['label'] = predicted_label
-    print(extracted_info)
-    return extracted_info
+    rss_feed['label'] = predicted_label
+    # print("Extracted Info from label_fetch : \n",extracted_info)
+    return rss_feed
 
 
 @routes_router.post("/model_upload", dependencies=[Depends(jwtBearer())])
