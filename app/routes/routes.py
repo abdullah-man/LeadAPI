@@ -15,7 +15,9 @@ from app.database.db_operations import DbOperation
 from app.database.db_warehouse import warehouse_dump
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
-from app.models.models import Lead, MLModel, UserLogin, User, Record
+from app.models.models import Lead, MLModel, UserLogin, Users, Record
+from app.database.connection import engine_url, get_session, conn
+from sqlmodel import select, Session
 
 
 class Settings(BaseSettings):
@@ -162,40 +164,47 @@ async def model_delete(model_details : MLModel):
 
 # --------------- Signup - Login Routes -------------------
 # checks if a user already exists in the database before signup or login
-def check_user(data : UserLogin, caller_flag : str): # UserLoginSchema has email and password
+def check_user(data : UserLogin, caller_flag : str, session : Session) -> bool: # UserLoginSchema has email and password
     """ 
     fetches all users from db and check presence of the passed user as data argument.
+    args:
+        data : 
+        caller_flag :
+        session : Session object, as passed by signup or login function. 
     """
-    conn_info = settings.db_connection_info
-    table_name = settings.db_users_table_name
-    try:
-        db_op = DbOperation()
-        sql = f"SELECT * FROM {table_name}"
-        fetched_users = db_op.fetch_data(conn_info=conn_info, sql=sql)
-        for user in fetched_users:
-            if caller_flag=='signup':
-                if user[2] == data.email: # unique email for each user - email is at tuple index 2
-                    return True
-                return False
-            elif caller_flag=='login':
-                if user[2] == data.email and user[3] == data.password: # unique email for each user - email is at tuple index 2
-                    return True
-                return False
-            else:
-                return {"error" : "caller flag not set either signup or login"}
-    except(Exception) as e:
-        return {"error" : "Exception occured while performing DB operation", "details" : f"{e}"}
+    USER_PRESENT = False
+    statement = select(Users)
+    all_users = session.exec(statement)
+    
+    # for user in all_users:
+    #     print(user)
+    #     print(type(user))
+
+    for user in all_users:
+        if caller_flag=='signup':
+            if user.email == data.email:
+                USER_PRESENT = True
+                print("**** user found in signup : ",user.email)
+                return USER_PRESENT
+        elif caller_flag=='login':
+            if user.email == data.email and user.password == data.password:
+                USER_PRESENT = True
+                print("**** user found in login : ", user.email)
+                return USER_PRESENT
+        elif caller_flag != 'signup' or caller_flag != 'login':
+            return {"error" : "caller flag not set either signup or login"}
+    print("**** No where USER found")
+    return USER_PRESENT
 
 
 # user sign up - to create a new user
 @routes_router.post("/user/signup", tags=["user"])
-def user_signup(user : User = Body(default=None)):   
-    if check_user(user, caller_flag='signup'):
-        db_op = DbOperation()
-        sql = "INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)"
-        values = (user.fullname, user.email, user.password) # user is an object of UserSchema class
-        db_op.insert_data_db(conn_info=settings.db_connection_info, sql=sql, values=values)
-        # return the JWT
+def user_signup(user : Users = Body(default=None), session=Depends(get_session)):
+    if not check_user(user, caller_flag='signup', session=session): # if USER_PRESENT is False
+        # insert new user in the DB
+        session.add(user)
+        session.commit()
+        session.refresh(user)
         return {"success" : "user has successfully signed up"}
     else:
         return {"notification" : "user already exists"}
@@ -203,10 +212,10 @@ def user_signup(user : User = Body(default=None)):
 
 # login
 @routes_router.post("/user/login", tags=["user"])
-def user_login(user : UserLogin = Body(default=None)):
+def user_login(user : UserLogin = Body(default=None), session=Depends(get_session)):
     # we also want to return signJWT with the user email as the user has already sugned up and
     # registered with his email
-    if check_user(user, caller_flag='login'):
+    if check_user(user, caller_flag='login', session=session):
         return signJWT(user.email)
     else:
         return {"error" : "invalid login details"}

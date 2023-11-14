@@ -53,31 +53,36 @@ def delete_model(model_details) -> None:
 # ------------------------
 
 # sign-up
-# sign_up_response = requests.post('http://127.0.0.1:8000/user/signup',
-#                                  headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
-#                                  json={"fullname": "abd", "email": "abd@example.com", "password": "string"})
-# signup_response_dict = json.loads(sign_up_response.text)
-# print(signup_response_dict)
-
+sign_up_response = requests.post('http://127.0.0.1:8000/user/signup',
+                                 headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
+                                 json={"fullname": "abd", "email": "abd@example.com", "password": "string"})
+try:
+    signup_response_dict = json.loads(sign_up_response.text)
+    print(signup_response_dict)
+except:
+    print(None)
 # login
 log_in_response = requests.post('http://127.0.0.1:8000/user/login',
                                 headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
-                                json={"email": "axiom@axiomworld.net", "password": "axiom123"})
+                                json={"email": "abd@example.com", "password": "string"})
 
-login_response_dict = json.loads(log_in_response.text)
-# print(login_response_dict)
+try:
+    login_response_dict = json.loads(log_in_response.text)
+    print(login_response_dict)
+except:
+    print(None)
 
 # label_fetch - a Lead for inference
-rss_feed = {'posted_on': 'August 06, 2023 09:40 UTC', 'category': 'Full Stack Development', 'skills': 'Odoo', 'country': 'Australia', 'message': '"I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we\'ve just aquired. # We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed. # The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate.', 'hourly_from': 7.0, 'hourly_to': 20.0, 'budget': '', 'db_model_name' : 'rf_clf_v0'}
-bearer_token = login_response_dict['access token']
+# rss_feed = {'posted_on': 'August 06, 2023 09:40 UTC', 'category': 'Full Stack Development', 'skills': 'Odoo', 'country': 'Australia', 'message': '"I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we\'ve just aquired. # We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed. # The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate.', 'hourly_from': 7.0, 'hourly_to': 20.0, 'budget': '', 'db_model_name' : 'rf_clf_v0'}
+# bearer_token = login_response_dict['access token']
 # bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJheGlvbUBheGlvbXdvcmxkLm5ldCIsImV4cGlyZXMiOjE2OTk0MTIyNzAuODg2NX0.wtQwhk3Yp03zBpH8psbCcxqARCkuvoPpFhEtBP5Wwg4"
 # print(bearer_token)
-inference_response = requests.post('http://127.0.0.1:8000/label_fetch',
-                              headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
-                              json=rss_feed)
+# inference_response = requests.post('http://127.0.0.1:8000/label_fetch',
+#                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
+#                               json=rss_feed)
 
-inference_response_dict = json.loads(inference_response.text)
-print(inference_response_dict)
+# inference_response_dict = json.loads(inference_response.text)
+# print(inference_response_dict)
 
 
 # ------------------------

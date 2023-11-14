@@ -77,7 +77,7 @@ class MLModel(SQLModel, table=True):
         }
 
 
-class User(SQLModel, table=True):
+class Users(SQLModel, table=True):
     id : Optional[int] = Field(default=None, primary_key=True)
     fullname : str = Field(default=None)
     email : EmailStr = Field(default=None) # EmailStr is an email validator
