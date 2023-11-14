@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.routes import routes_router
-
+from app.database.connection import conn
 
 app = FastAPI()
 
@@ -19,6 +19,10 @@ app.add_middleware(
 
 # Register routes
 app.include_router(routes_router)
+
+@app.on_event("startup")
+def on_startup():
+    conn()
 
 
 if __name__== '__main__':

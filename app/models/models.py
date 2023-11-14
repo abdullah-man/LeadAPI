@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Union
-
+from typing import Union, Optional
+from sqlmodel import SQLModel, Field, Column
+# from sqlalchemy import Column, Integer, Float
 
 class Lead(BaseModel):
     """
@@ -26,16 +27,47 @@ class Lead(BaseModel):
                 "hourly_from" : "float or empty string",
                 "hourly_to" : "float or empty string",
                 "budget" : "float or empty string",
-                "label" : "empty string",
                 "db_model_name" : "jkl_v0",
             }
         }
 
 
-class ModelDetails(BaseModel):
+class Record(SQLModel, table=True):
+    """
+    Model of the lead object passed as JSON object in POST request to label_fetch 
+    """
+    id : Optional[int] = Field(default=None, primary_key=True)
+    posted_on : str
+    category : str
+    skills : str
+    country : str
+    message : str
+    hourly_from : Optional[float] = None # either float or string
+    hourly_to : Optional[float] = None
+    budget : Optional[float] = None
+    label : str
+    class Config:
+        the_schema = {
+            "lead_demo" :{
+                "posted_on" : "<p>this is a record</p>",
+                "category" : "<p>this is a record</p>",
+                "skills" : "<p>this is a record</p>",
+                "country" : "<p>this is a record</p>",
+                "message" : "<p>this is a record</p>",
+                "hourly_from" : "float or empty string",
+                "hourly_to" : "float or empty string",
+                "budget" : "float or empty string",
+                "label" : "empty string",
+            }
+        }
+
+
+
+class MLModel(SQLModel, table=True):
     """
     Model containing ml model name details
     """
+    id : Optional[int] = Field(default=None, primary_key=True)
     db_model_name : str
     class Config:
         the_schema = {
@@ -45,21 +77,22 @@ class ModelDetails(BaseModel):
         }
 
 
-class UserSchema(BaseModel):
+class User(SQLModel, table=True):
+    id : Optional[int] = Field(default=None, primary_key=True)
     fullname : str = Field(default=None)
     email : EmailStr = Field(default=None) # EmailStr is an email validator
     password : str = Field(default=None)
     class Config:
         the_schema = {
             "user_demo" :{
-                "name" : "abc",
+                "fullname" : "abc",
                 "email" : "abc@abc.com",
                 "password" : "123"
             }
         }
 
 
-class UserLoginSchema(BaseModel):
+class UserLogin(BaseModel):
     email : EmailStr = Field(default=None) # EmailStr is an email validator
     password : str = Field(default=None)
     class Config:

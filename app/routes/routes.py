@@ -7,7 +7,7 @@ import psycopg2
 
 from fastapi import Body, Depends, APIRouter 
 from fastapi import UploadFile, File
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
 
 from extraction import extractor
 from predict import Predict
@@ -15,7 +15,7 @@ from app.database.db_operations import DbOperation
 from app.database.db_warehouse import warehouse_dump
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
-from app.models.models import Lead, ModelDetails, UserLoginSchema, UserSchema
+from app.models.models import Lead, MLModel, UserLogin, User, Record
 
 
 class Settings(BaseSettings):
@@ -124,7 +124,7 @@ async def model_update():
 
 
 @routes_router.delete("/model_delete", dependencies=[Depends(jwtBearer())])
-async def model_delete(model_details : ModelDetails):
+async def model_delete(model_details : MLModel):
     # getting json file sent through the post request data parameter
     model_details = model_details.model_dump_json()
 
@@ -162,7 +162,7 @@ async def model_delete(model_details : ModelDetails):
 
 # --------------- Signup - Login Routes -------------------
 # checks if a user already exists in the database before signup or login
-def check_user(data : UserLoginSchema, caller_flag : str): # UserLoginSchema has email and password
+def check_user(data : UserLogin, caller_flag : str): # UserLoginSchema has email and password
     """ 
     fetches all users from db and check presence of the passed user as data argument.
     """
@@ -189,7 +189,7 @@ def check_user(data : UserLoginSchema, caller_flag : str): # UserLoginSchema has
 
 # user sign up - to create a new user
 @routes_router.post("/user/signup", tags=["user"])
-def user_signup(user : UserSchema = Body(default=None)):   
+def user_signup(user : User = Body(default=None)):   
     if check_user(user, caller_flag='signup'):
         db_op = DbOperation()
         sql = "INSERT INTO users (fullname, email, password) VALUES (%s, %s, %s)"
@@ -203,12 +203,10 @@ def user_signup(user : UserSchema = Body(default=None)):
 
 # login
 @routes_router.post("/user/login", tags=["user"])
-def user_login(user : UserLoginSchema = Body(default=None)):
+def user_login(user : UserLogin = Body(default=None)):
     # we also want to return signJWT with the user email as the user has already sugned up and
     # registered with his email
     if check_user(user, caller_flag='login'):
         return signJWT(user.email)
     else:
         return {"error" : "invalid login details"}
-
-
