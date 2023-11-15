@@ -1,7 +1,16 @@
 from sqlmodel import SQLModel, Session, create_engine
+from decouple import config
+
+DB_USERNAME = config('DB_USERNAME')
+DB_PASS = config('DB_PASS')
+DB_HOST = config('DB_HOST')
+DB_PORT = config('DB_PORT')
+DB_NAME = config('DB_NAME')
 
 
-database_connection_string = f"postgresql://postgres:axiom123@localhost:5432/postgres"
+database_connection_string = f"postgresql://{DB_USERNAME}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+# database_connection_string = f"postgresql://postgres:axiom123@localhost:5432/postgres"
 connect_args = {"check_same_thread" : False}
 
 # an instance of the created SQL database 
