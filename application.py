@@ -8,6 +8,7 @@ app = FastAPI()
 
 # Register origins - Allow all origins : * 
 # actually only axiom odoo server will be allowed to access the api
+# origins = ["https://hq.axm.app/"]
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,

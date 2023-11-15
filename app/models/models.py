@@ -37,15 +37,15 @@ class Record(SQLModel, table=True):
     Model of the lead object passed as JSON object in POST request to label_fetch 
     """
     id : Optional[int] = Field(default=None, primary_key=True)
-    posted_on : str
-    category : str
-    skills : str
-    country : str
-    message : str
-    hourly_from : Optional[float] = None # either float or string
-    hourly_to : Optional[float] = None
-    budget : Optional[float] = None
-    label : str
+    posted_on : str = None  # None -> same as : null=True
+    category : str = None
+    skills : str = None
+    country : str = None
+    message : str = None
+    hourly_from : str = None
+    hourly_to : str = None
+    budget : str = None
+    label : str = None
     class Config:
         the_schema = {
             "lead_demo" :{

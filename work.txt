@@ -10,10 +10,10 @@ Remaining Work after authentication:
 7-  Loading environment variables using config in application.py file instead of settings
 8-  Removal of Extraction from the feed and testing this using _client                              DONE
 10- Password hashing addition in the code - model file name unhashing
-11- Database : handling of DB operations via SQLModel class                                         DO--
+11- Database : handling of DB operations via SQLModel class                                         DONE
 12- Improve code by replacing save_model and fetch_model with insert_data_db and fetch_data methods No Need
 13- Logout : implementation with Token revoking and maintaining a table of revoked tokens           No Need
-14- Testing for complete cycle
+14- Testing for complete cycle                                                                      DONE
 15- Remove return jwt token on sign-up, just send a success message                                 DONE
 16- Hide sig-up from the open documentation                                                         DONE
 16- Containerization of the application using Docker

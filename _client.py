@@ -74,12 +74,12 @@ except:
 
 
 # Model Upload
-os.system(f"curl -X 'POST' \
-  'http://127.0.0.1:8000/model_upload' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'file=@rf_clf_v0.model'")
+# os.system(f"curl -X 'POST' \
+#   'http://127.0.0.1:8000/model_upload' \
+#   -H 'accept: application/json' \
+#   -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg' \
+#   -H 'Content-Type: multipart/form-data' \
+#   -F 'file=@rf_clf_v0.model'")
 
 
 # Model Delete

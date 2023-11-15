@@ -1,25 +1,19 @@
-import pandas as pd
 import copy
 import pickle
 import os
 from secrets import token_hex # for hashing
-import psycopg2
 from typing import List
-from typing_extensions import Annotated
 
 from fastapi import Body, Depends, APIRouter 
-from fastapi import UploadFile, File
+from fastapi import UploadFile
 from pydantic import BaseSettings
+from sqlmodel import select, Session
 
-from extraction import extractor
-from predict import Predict
-from app.database.db_operations import DbOperation
-from app.database.db_warehouse import warehouse_dump
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
-from app.models.models import Lead, MLModel, UserLogin, Users, Record, MLModelDelete, Label
-from app.database.connection import engine_url, get_session, conn
-from sqlmodel import select, Session
+from app.models.models import Lead, MLModel, UserLogin, Users, Record, MLModelDelete
+from app.database.connection import get_session
+from predict import Predict
 
 
 class Settings(BaseSettings):
@@ -39,7 +33,6 @@ routes_router = APIRouter(tags=["routes"])
 
 
 
-
 @routes_router.get("/data_fetch", dependencies=[Depends(jwtBearer())], response_model=List[Record])
 async def data_fetch(session=Depends(get_session)):
     """
@@ -52,28 +45,45 @@ async def data_fetch(session=Depends(get_session)):
 
 
 @routes_router.post("/label_fetch", dependencies=[Depends(jwtBearer())])
-async def label_fetch(rss_feed : Lead, session=Depends(get_session)) -> Label:
+async def label_fetch(rss_feed : Lead, session=Depends(get_session)):
     """
-    Receives a lead in json format, extracts embedded information,
+    Receives a lead in json format,
     classify it using ML model, saves it in datawarehouse,
     returns as dict with label info to the client
     """
     # get model from the database and unpickle the model file for inference
-    statement = select(MLModel).where(MLModel.model_name==rss_feed.model_name)
-    model = session.exec(statement).one()
-    model = pickle.load(open(model.model_file, 'rb'))
+    try:
+        statement = select(MLModel).where(MLModel.model_name==rss_feed.model_name)
+        model = session.exec(statement).one()
+        model = pickle.load(open(model.model_file, 'rb'))
 
-    pr = Predict()
-    # encode the lead
-    encoded_info = pr.encode_lead(data=copy.deepcopy(rss_feed.dict())) # pass as a dictionary
-    print("**********", encoded_info)
-    # vectorize the lead
-    vec = pr.vectorize_lead(encoded_info)
-    # predict the lead
-    predicted_label = pr.predict_lead(vector=vec, ml_model=model)
+        pr = Predict()
+        # encode the lead
+        encoded_info = pr.encode_lead(data=copy.deepcopy(rss_feed.dict())) # pass as a dictionary
+        # vectorize the lead
+        vec = pr.vectorize_lead(encoded_info)
+        # predict the lead
+        predicted_label = pr.predict_lead(vector=vec, ml_model=model)
+    except(Exception) as e:
+        return {"error" : "prediction could not be carried out", "detail" : e}
     
     # save the lead as Record object in the data-warehouse
-    
+    try:
+        record = Record(
+            posted_on=rss_feed.posted_on,
+            category=rss_feed.category,
+            skills=rss_feed.skills,
+            country=rss_feed.country,
+            message=rss_feed.message,
+            hourly_from=rss_feed.hourly_from,
+            hourly_to=rss_feed.hourly_to,
+            budget=rss_feed.budget,
+            label=predicted_label
+        )
+        session.add(record)
+        session.commit()
+    except(Exception) as e:
+        return{"error" : "record could not be saved in the warehouse", "detail" : e}
     
     # return the label
     return {'label' : predicted_label}
