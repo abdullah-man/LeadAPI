@@ -4,16 +4,16 @@ Remaining Work after authentication:
 1-  Database User Table and authentication using this                                               DONE
 2-  Expiry of JWT token handling | a token that expires after one year                              DONE    
 3-  Models : Lead and ModelDetails improvement and moving to models file                            DONE
-4-  Routes : Improvement on handling and validating the incoming request Body properly
+4-  Routes : Improvement on handling and validating the incoming request Body properly              DONE
 5-  Routes : Moving to routes file                                                                  DONE
 6-  Clearing out application.py file and renaming it to main, testing all endpoints                 DONE
 7-  Loading environment variables using config in application.py file instead of settings
 8-  Removal of Extraction from the feed and testing this using _client                              DONE
 10- Password hashing addition in the code - model file name unhashing
-11- Database : handling of DB operations via SQLModel class
-12- Improve code by replacing save_model and fetch_model with insert_data_db and fetch_data methods
-13- Logout : implementation with Token revoking and maintaining a table of revoked tokens
-14- Testing for complete cycle : Signup, Login, Prediction, Model upload, Model Delete, Logout
-15- Remove return jwt token on sign-up, just send a success message 
-- Containerization of the application
-- Deployment of the containerized application
+11- Database : handling of DB operations via SQLModel class                                         DO--
+12- Improve code by replacing save_model and fetch_model with insert_data_db and fetch_data methods No Need
+13- Logout : implementation with Token revoking and maintaining a table of revoked tokens           No Need
+14- Testing for complete cycle
+15- Remove return jwt token on sign-up, just send a success message                                 DONE
+16- Hide sig-up from the open documentation                                                         DONE
+16- Containerization of the application using Docker

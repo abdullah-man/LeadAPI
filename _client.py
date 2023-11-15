@@ -5,24 +5,7 @@ Simulates a Client for REST API
 import requests
 import pandas as pd
 import json
-
-
-def get_data() -> None:
-    """
-    Simulates a client sending request to get data from Rest API and saves it in an Excel file
-    """
-    response = requests.get('http://127.0.0.1:8000/data_fetch')
-
-    # response dictionary
-    response_dict = json.loads(response.text)
-
-    # for i in response_dict:
-    #     print("key: ", i, "val: ", response_dict[i])
-
-    # cols = columns=['posted_on', 'category', 'skills', 'country', 'message', 'hourly_from', 'hourly_to', 'budget', 'label', 'id']
-    data = pd.DataFrame(response_dict)
-    print(data.columns)
-    data.to_excel("fetched.xlsx", index=False)
+import os
 
 
 def get_labeled_extracted_data(rss_feed) -> object:
@@ -61,38 +44,76 @@ try:
     print(signup_response_dict)
 except:
     print(None)
-# login
-log_in_response = requests.post('http://127.0.0.1:8000/user/login',
-                                headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
-                                json={"email": "abd@example.com", "password": "string"})
 
-try:
-    login_response_dict = json.loads(log_in_response.text)
-    print(login_response_dict)
-except:
-    print(None)
+# login
+# log_in_response = requests.post('http://127.0.0.1:8000/user/login',
+#                                 headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
+#                                 json={"email": "abd@example.com", "password": "string"})
+
+# try:
+#     login_response_dict = json.loads(log_in_response.text)
+#     print(login_response_dict)
+# except:
+#     print(None)
+
+
+# Data Fetch
+# bearer_token = login_response_dict['access token']
+# bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg"
+# data_fetch_response = requests.get('http://127.0.0.1:8000/data_fetch',
+#                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},)
+# try:
+#     data_fetch_response_dict = json.loads(data_fetch_response.text)
+#     print(data_fetch_response_dict)
+# except:
+#     print(None)
+
+# data = pd.DataFrame(data_fetch_response_dict)
+# print(data.columns)
+# data.to_excel("fetched.xlsx", index=False)
+
+
+# Model Upload
+os.system(f"curl -X 'POST' \
+  'http://127.0.0.1:8000/model_upload' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@rf_clf_v0.model'")
+
+
+# Model Delete
+# bearer_token = login_response_dict['access token']
+# bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg"
+# model_delete_response = requests.delete('http://127.0.0.1:8000/model_delete',
+#                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
+#                               json={'model_name' : 'rf_clf_v0'})
+# try:
+#     model_delete_response_dict = json.loads(model_delete_response.text)
+#     print(model_delete_response_dict)
+# except:
+#     print(None)
+
 
 # label_fetch - a Lead for inference
-# rss_feed = {'posted_on': 'August 06, 2023 09:40 UTC', 'category': 'Full Stack Development', 'skills': 'Odoo', 'country': 'Australia', 'message': '"I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we\'ve just aquired. # We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed. # The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate.', 'hourly_from': 7.0, 'hourly_to': 20.0, 'budget': '', 'db_model_name' : 'rf_clf_v0'}
+rss_feed = {'posted_on': 'August 06, 2023 09:40 UTC', 'category': 'Full Stack Development', 'skills': 'Odoo', 'country': 'Australia', 'message': '"I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we\'ve just aquired. # We will be importing data from MailChimp, Xero, WordPress and WooCommerce, setting up inventory, email templates, automations and campaigns and other work as needed. # The bulk of this work will take place over the next few weeks, but I suspect there will be ongoing work for the right candidate.', 'hourly_from': 7.0, 'hourly_to': 20.0, 'budget': '', 'model_name' : 'rf_clf_v0'}
 # bearer_token = login_response_dict['access token']
-# bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJheGlvbUBheGlvbXdvcmxkLm5ldCIsImV4cGlyZXMiOjE2OTk0MTIyNzAuODg2NX0.wtQwhk3Yp03zBpH8psbCcxqARCkuvoPpFhEtBP5Wwg4"
-# print(bearer_token)
-# inference_response = requests.post('http://127.0.0.1:8000/label_fetch',
-#                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
-#                               json=rss_feed)
+bearer_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySUQiOiJhYmRAZXhhbXBsZS5jb20iLCJleHBpcmVzIjoxNzMxNDg0Mzk2LjUxMTA4Nn0.S0rLV-AJKRUtzuI6A-Enf_hxxAtnYLZu8MkEwiootxg"
+inference_response = requests.post('http://127.0.0.1:8000/label_fetch',
+                              headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},
+                              json=rss_feed)
 
-# inference_response_dict = json.loads(inference_response.text)
-# print(inference_response_dict)
-
+try:
+    inference_response_dict = json.loads(inference_response.text)
+    print(inference_response_dict)
+except:
+    print(None)
 
 # ------------------------
 
 # upload a trained model
 # model = "../Pipeline/rf_clf_v0.1.model"
 # send_model()
-
-# get data from warehouse
-# get_data()
 
 # get labeled extracted data
 # rss_feed = """"<p>I need an odoo expert to assist with importing data and setting up a new odoo application for an existing business we've just aquired.<br> 

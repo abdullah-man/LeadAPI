@@ -2,8 +2,10 @@ import pandas as pd
 import copy
 import pickle
 import os
-from secrets import token_hex # for hashing uploaded file name
+from secrets import token_hex # for hashing
 import psycopg2
+from typing import List
+from typing_extensions import Annotated
 
 from fastapi import Body, Depends, APIRouter 
 from fastapi import UploadFile, File
@@ -15,7 +17,7 @@ from app.database.db_operations import DbOperation
 from app.database.db_warehouse import warehouse_dump
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
-from app.models.models import Lead, MLModel, UserLogin, Users, Record
+from app.models.models import Lead, MLModel, UserLogin, Users, Record, MLModelDelete, Label
 from app.database.connection import engine_url, get_session, conn
 from sqlmodel import select, Session
 
@@ -38,70 +40,57 @@ routes_router = APIRouter(tags=["routes"])
 
 
 
-@routes_router.get("/data_fetch", dependencies=[Depends(jwtBearer())])
-async def data_fetch():
+@routes_router.get("/data_fetch", dependencies=[Depends(jwtBearer())], response_model=List[Record])
+async def data_fetch(session=Depends(get_session)):
     """
     Fetches all data from the database and returns as JSON in response
     """
-    conn_info = settings.db_connection_info
-    table_name = settings.db_data_table_name
-    
-    data_fetcher = DbOperation()
-    sql = f"SELECT * FROM {table_name}"
-    data = data_fetcher.fetch_data(conn_info=conn_info, sql=sql)
+    statement = select(Record)
+    all_records = session.exec(statement).all() # .all() gives a list of the returned query set
 
-    cols = ['posted_on', 'category', 'skills', 'country', 'message', 'hourly_from', 'hourly_to', 'budget', 'label', 'id']
-    data = pd.DataFrame(data=data, columns=cols)
-    data = data.to_dict()
-    return data
+    return all_records
 
 
 @routes_router.post("/label_fetch", dependencies=[Depends(jwtBearer())])
-async def label_fetch(rss_feed : Lead):
+async def label_fetch(rss_feed : Lead, session=Depends(get_session)) -> Label:
     """
     Receives a lead in json format, extracts embedded information,
     classify it using ML model, saves it in datawarehouse,
     returns as dict with label info to the client
     """
-    # getting json file sent through the post request data parameter
-    # model_dump() -> converts a pydantic model to dictionary object
-    rss_feed = rss_feed.model_dump_json()
-    rss_feed = eval(rss_feed)
-    model_name = rss_feed['db_model_name']
+    # get model from the database and unpickle the model file for inference
+    statement = select(MLModel).where(MLModel.model_name==rss_feed.model_name)
+    model = session.exec(statement).one()
+    model = pickle.load(open(model.model_file, 'rb'))
 
-    # load ml model from database
-    conn_info = settings.db_connection_info
-    sql = f"SELECT model_file FROM model WHERE model_name = %s" 
-    value = (model_name,)
-
-    db_op = DbOperation()
-    model_file = db_op.fetch_model(conn_info=conn_info, sql=sql, value=value)
-    # unhash the model file name  
-
-    # Deserializing the model file
-    ml_model = pickle.load(open(model_file, 'rb'))
-
-    # predict the label
     pr = Predict()
-    # deepcopying, as mutable objects are passed by reference. 
-    # extracted_info gets changed on passing as arg.
-    encoded_info = pr.encode_lead(data=copy.deepcopy(rss_feed)) 
+    # encode the lead
+    encoded_info = pr.encode_lead(data=copy.deepcopy(rss_feed.dict())) # pass as a dictionary
+    print("**********", encoded_info)
+    # vectorize the lead
     vec = pr.vectorize_lead(encoded_info)
-    predicted_label = pr.predict_lead(vector=vec, ml_model=ml_model)
-
-    # save data into data-warehouse/database
-    warehouse_dump(info_dict=rss_feed, label=predicted_label, table_name=settings.db_data_table_name)
-
-    # send back to the client : HQ with label information
-    rss_feed['label'] = predicted_label
-    # print("Extracted Info from label_fetch : \n",extracted_info)
-    return rss_feed
+    # predict the lead
+    predicted_label = pr.predict_lead(vector=vec, ml_model=model)
+    
+    # save the lead as Record object in the data-warehouse
+    
+    
+    # return the label
+    return {'label' : predicted_label}
 
 
 @routes_router.post("/model_upload", dependencies=[Depends(jwtBearer())])
-async def model_upload(file : UploadFile = File(...)):
+async def model_upload(file : UploadFile, session=Depends(get_session)):
     file_extension = file.filename.split(".").pop()
     model_name = file.filename.split(".")[0]
+    
+    # check if a model under this name already exists in the database
+    statement = select(MLModel)
+    fetched_models = session.exec(statement)
+    for model in fetched_models:
+        if model.model_name == model_name:
+            return {"Error" : "Cannot upload the model as another model under this name already exists."}
+
     hashed_file_name = token_hex(10) # name size 10 bytes
     new_file_name = f"{hashed_file_name}.{file_extension}"
     file_path = os.path.join("models",new_file_name)
@@ -111,51 +100,28 @@ async def model_upload(file : UploadFile = File(...)):
         content = await file.read()
         f.write(content)
 
-    # save model's file_path in database
-    db_op = DbOperation()
-    sql = "INSERT INTO model (model_name, model_file) VALUES (%s, %s)"
-    values = (model_name, file_path)
-    db_op.save_model(conn_info=settings.db_connection_info, sql=sql, values=values)
-
-    return {"status" : "Success", "message" : "Model saved successfully!"}
-
-
-@routes_router.put("/update_model")
-async def model_update():
-    pass
+    # # save model's file_path in database
+    ml_model = MLModel(model_name=model_name, model_file=file_path)
+    session.add(ml_model)
+    session.commit()
+    session.refresh(ml_model)
+    return {"success" : "ml model has successfully uploaded"}
 
 
 @routes_router.delete("/model_delete", dependencies=[Depends(jwtBearer())])
-async def model_delete(model_details : MLModel):
-    # getting json file sent through the post request data parameter
-    model_details = model_details.model_dump_json()
-
-    # type casting str into dict
-    model_details = eval(model_details)
-    model_name = model_details['model_name']
-
-    # fetching model file path from db
-    # load ml model from database
-    conn_info = settings.db_connection_info
-
-    sql = f"SELECT model_file FROM model WHERE model_name = %s" 
-    value = (model_name,)
-
-    db_op = DbOperation()
-    model_file = db_op.fetch_model(conn_info=conn_info, sql=sql, value=value)
-    
-    # Deleting the model from Database
+async def model_delete(model_details : MLModelDelete, session=Depends(get_session)):
+    # fetch the model and delete from DB
     try:
-        sql = f"DELETE FROM model WHERE model_name = %s" 
-        value = (model_name,)
-        db_op.delete_model(conn_info=conn_info, sql=sql, value=value)
-
-    except (Exception, psycopg2.DatabaseError) as e:
-        return {'status' : 'Failed', 'message' : 'Model could not be deleted from database', 'exception' : e}
-
-    # Deleting the model file from server
+        statement = select(MLModel).where(MLModel.model_name==model_details.model_name)
+        model = session.exec(statement).one()
+        model_path = model.model_file
+        session.delete(model)
+        session.commit()
+    except Exception as e:
+        pass 
+    # Delete model file from Server        
     try:
-        os.remove(model_file)
+        os.remove(model_path)
     except (Exception, FileNotFoundError) as e:
         return {'status' : 'Failed', 'message' : 'Model file could not be deleted from server', 'exception' : e}
 
@@ -175,21 +141,15 @@ def check_user(data : UserLogin, caller_flag : str, session : Session) -> bool: 
     USER_PRESENT = False
     statement = select(Users)
     all_users = session.exec(statement)
-    
-    # for user in all_users:
-    #     print(user)
-    #     print(type(user))
 
     for user in all_users:
         if caller_flag=='signup':
             if user.email == data.email:
                 USER_PRESENT = True
-                print("**** user found in signup : ",user.email)
                 return USER_PRESENT
         elif caller_flag=='login':
             if user.email == data.email and user.password == data.password:
                 USER_PRESENT = True
-                print("**** user found in login : ", user.email)
                 return USER_PRESENT
         elif caller_flag != 'signup' or caller_flag != 'login':
             return {"error" : "caller flag not set either signup or login"}
@@ -198,7 +158,8 @@ def check_user(data : UserLogin, caller_flag : str, session : Session) -> bool: 
 
 
 # user sign up - to create a new user
-@routes_router.post("/user/signup", tags=["user"])
+# include_in_schema=Flase -> hides the endpoint from the generated OpenAPI schema and from auto documentation
+@routes_router.post("/user/signup", tags=["user"], include_in_schema=False) 
 def user_signup(user : Users = Body(default=None), session=Depends(get_session)):
     if not check_user(user, caller_flag='signup', session=session): # if USER_PRESENT is False
         # insert new user in the DB

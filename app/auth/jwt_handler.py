@@ -24,7 +24,7 @@ def signJWT(userID : str): # userID is username/email of the user
     # a dict containing userID and expiration time
     payload = {
         "userID" : userID,
-        "expires" : (datetime.datetime.utcnow() + datetime.timedelta(0,5)).timestamp() # 365 days validity
+        "expires" : (datetime.datetime.utcnow() + datetime.timedelta(365)).timestamp() # 365 days validity
     }
     # now creating the token
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)  
