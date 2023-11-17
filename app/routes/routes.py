@@ -5,30 +5,17 @@ from secrets import token_hex # for hashing
 from typing import List
 
 from fastapi import Body, Depends, APIRouter 
-from fastapi import UploadFile
-from pydantic import BaseSettings
+from fastapi import UploadFile, File
 from sqlmodel import select, Session
 
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer  
 from app.models.models import Lead, MLModel, UserLogin, Users, Record, MLModelDelete
 from app.database.connection import get_session
-from predict import Predict
-
-
-class Settings(BaseSettings):
-    """
-    Saves database connection information in environment variables
-    """
-    db_connection_info : dict = {'database' : 'postgres', 'user' : 'postgres',
-                                  'password' : 'axiom123', 'host' : '0.0.0.0', 
-                                  'port' : '5432'}
-    db_data_table_name : str = 'information'
-    db_users_table_name : str = 'users'
+from app.predict.predict import Predict 
 
 
 
-settings = Settings()
 routes_router = APIRouter(tags=["routes"])
 
 
@@ -90,7 +77,7 @@ async def label_fetch(rss_feed : Lead, session=Depends(get_session)):
 
 
 @routes_router.post("/model_upload", dependencies=[Depends(jwtBearer())])
-async def model_upload(file : UploadFile, session=Depends(get_session)):
+async def model_upload(file : UploadFile = File(...), session=Depends(get_session)):
     file_extension = file.filename.split(".").pop()
     model_name = file.filename.split(".")[0]
     
