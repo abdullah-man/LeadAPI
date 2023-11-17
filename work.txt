@@ -16,5 +16,5 @@ Remaining Work after authentication:
 14- Testing for complete cycle                                                                      DONE
 15- Remove return jwt token on sign-up, just send a success message                                 DONE
 16- Hide sig-up from the open documentation                                                         DONE
-17- Unit tests writing and endpoint and model for test conduction
-18- Containerization of the application using Docker
+17- Unit tests writing and endpoint and model for test conduction                                   DONE
+18 -Containerization of the application using Docker

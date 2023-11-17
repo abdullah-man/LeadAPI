@@ -64,7 +64,7 @@ except:
 #                               headers={'accept' : 'application/json', 'Content-Type' : 'application/json', 'Authorization' : f'Bearer {bearer_token}'},)
 # try:
 #     data_fetch_response_dict = json.loads(data_fetch_response.text)
-#     print(data_fetch_response_dict)
+#     print(type(data_fetch_response_dict))
 # except:
 #     print(None)
 

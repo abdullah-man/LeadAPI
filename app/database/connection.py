@@ -11,7 +11,7 @@ DB_NAME = config('DB_NAME')
 database_connection_string = f"postgresql://{DB_USERNAME}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # database_connection_string = f"postgresql://postgres:axiom123@localhost:5432/postgres"
-connect_args = {"check_same_thread" : False}
+# connect_args = {"check_same_thread" : False}
 
 # an instance of the created SQL database 
 engine_url = create_engine(database_connection_string, echo=True)
