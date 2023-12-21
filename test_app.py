@@ -89,7 +89,7 @@ def test_signup_login_already_exist(session : Session, client : TestClient):
     response = client.post(
         'http://127.0.0.1:8000/user/signup',
         headers={'accept' : 'application/json', 'Content-Type' : 'application/json'},
-        json={"fullname": "cde", "email": "rer@example.com", "password": "erere"}
+        json={"fullname": "abd", "email": "abd@example.com", "password": "string"}
         )
     data = json.loads(response.text)
     assert response.status_code == 200

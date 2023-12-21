@@ -1,0 +1,37 @@
+
+
+# Connect to the server
+ssh -i nextcloud.pem ubuntu@3.111.36.208
+
+# Zip and Copy files to the server
+# /home/ubuntu/ : on running pwd commad on the server this poath is returned. It's an ubuntu based server
+# nextcloud.pem : the file that contains server private key
+# LeadAPI.zip : our code that we want to move to the server
+
+scp -i nextcloud.pem LeadAPI.zip  ubuntu@3.111.36.208:/home/ubuntu/
+
+
+# Unzip files and Install python version of your choice
+Unzip LeadAPI.zip
+
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+sudo apt-get install python3.8
+
+sudo apt install python3.8-venv
+
+# Make environment, activate it and install libraries
+python3.8 -m venv ./venv
+pip install -r requirements.txt
+
+# Docker image of Postgres 16, run - runs if docker is already installed
+docker run -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=axiom123 -e POSTGRES_DB=postgres --name postgres16 -t postgres:16.0
+
+# Run the application - applicaiton runs in the background unless killed exclusively
+nohup python application.py &
+
+# Check the process id of the application - needed if needs to be killed
+ps -aux | grep application.py
+
+# Kill the application
+kill -9 process-id-of-the-application
